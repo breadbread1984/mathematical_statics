@@ -53,6 +53,7 @@ def mean_diff_interval(x1, x2, conf = 0.95):
   n1 = x1.shape[0];
   n2 = x2.shape[0];
   sample_var = ((n1 - 1) * sample_var1 + (n2 - 1) * sample_var2) / (n1 + n2 - 2);
+  sample_stdvar = tf.math.sqrt(sample_var);
   alpha = 1 - conf;
   # NOTE: tensorflow probability doesn't implement of student quantile yet
   '''
@@ -63,8 +64,8 @@ def mean_diff_interval(x1, x2, conf = 0.95):
   from scipy import stats;
   t = stats.t(df = n1 + n2 - 2).ppf(1 - alpha / 2);
 
-  low_bound = sample_mean1 - sample_mean2 - sample_var * t * tf.math.sqrt(1 / n1 + 1 / n2);
-  upper_bound = sample_mean1 - sample_mean2 + sample_var * t * tf.math.sqrt(1 / n1 + 1 / n2);
+  low_bound = sample_mean1 - sample_mean2 - sample_stdvar * t * tf.math.sqrt(1 / n1 + 1 / n2);
+  upper_bound = sample_mean1 - sample_mean2 + sample_stdvar * t * tf.math.sqrt(1 / n1 + 1 / n2);
   return low_bound, upper_bound;
 
 if __name__ == "__main__":
