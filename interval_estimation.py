@@ -68,6 +68,15 @@ def mean_diff_interval(x1, x2, conf = 0.95):
   upper_bound = sample_mean1 - sample_mean2 + sample_stdvar * t * tf.math.sqrt(1 / n1 + 1 / n2);
   return low_bound, upper_bound;
 
+def var_ratio_interval(x1, x2, conf = 0.95):
+  # NOTE: (sample_var(x1)/sample_var(x2)/(total_var1/total_var2)) ~ F(n1 - 1, n2 - 1)
+  sample_var1 = var(x1);
+  sample_var2 = var(x2);
+  n1 = x1.shape[0];
+  n2 = x2.shape[0];
+  alpha = 1 - conf;
+
+
 if __name__ == "__main__":
   samples = tf.constant([506, 508, 499, 503, 504, 510, 497, 512, 514, 505, 493, 496, 506, 502, 509, 496]);
   print(mean_interval(samples, conf = 0.95));
