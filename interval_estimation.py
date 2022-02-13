@@ -101,6 +101,7 @@ def var_ratio_interval(x1 = None, x2 = None, svar1 = None, svar2 = None, snum1 =
   return low_bound, upper_bound;
 
 def p_interval(x = None, smean = None, snum = None, conf = 0.95):
+  # NOTE: x must from bernoulli distribution
   assert x is not None or (smean is not None and snum is not None);
   if x is not None: assert len(x.shape) == 1;
   assert type(conf) is float and 0 <= conf <= 1;
@@ -109,7 +110,10 @@ def p_interval(x = None, smean = None, snum = None, conf = 0.95):
   n = x.shape[0] if x is not None else snum;
   alpha = 1 - conf;
   
+  normal_dist = tfp.distributions.Normal(loc = 0, scale = 1);
+  n = normal_dist.quantile(1 - alpha / 2);
   
+  low_bound = 
 
 if __name__ == "__main__":
   samples = tf.constant([506, 508, 499, 503, 504, 510, 497, 512, 514, 505, 493, 496, 506, 502, 509, 496]);
