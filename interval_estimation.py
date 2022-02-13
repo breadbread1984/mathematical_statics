@@ -52,7 +52,7 @@ def mean_diff_interval(x1 = None, x2 = None, smean1 = None, smean2 = None, svar1
     assert len(x1.shape) == 1;
     assert len(x2.shape) == 1;
   assert type(conf) is float and 0 <= conf <= 1;
-  # NOTE: ((sample_mean(x1) - sample_mean(x2)) - (total_mean(x1) - total_mean(x2)))/(sample_var(x1 union x2) sqrt(1 / n1 + 1 / n2)) ~ t(n1 + n2 - 2)
+  # NOTE: ((sample_mean(x1) - sample_mean(x2)) - (total_mean1 - total_mean2))/(sample_var(x1 union x2) sqrt(1 / n1 + 1 / n2)) ~ t(n1 + n2 - 2)
   sample_mean1 = mean(x1) if x1 is not None else smean1;
   sample_mean2 = mean(x2) if x2 is not None else smean2;
   sample_var1 = var(x1) if x1 is not None else svar1;
