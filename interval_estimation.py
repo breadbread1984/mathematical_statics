@@ -7,6 +7,7 @@ def mean_interval(x = None, smean = None, sstdvar = None, snum = None, conf = 0.
   assert x is not None or (smean is not None and sstdvar is not None  and snum is not None);
   if x is not None: assert len(x.shape) == 1;
   assert type(conf) is float and 0 <= conf <= 1;
+  # INFO: X ~ N(0,1) Y ~chi2(n) X/sqrt(Y/n)~t(n)
   # NOTE: (sample_mean(x) - total_mean) / (sample_stdvar(x) / sqrt(n)) ~ t(n-1)
   sample_mean = mean(x) if x is not None else smean;
   sample_stdvar = stdvar(x) if x is not None else sstdvar;
@@ -29,6 +30,7 @@ def var_interval(x = None, svar = None, snum = None, conf = 0.95):
   assert x is not None or svar is not None;
   if x is not None: assert len(x.shape) == 1;
   assert type(conf) is float and 0 <= conf <= 1;
+  # INFO: X1,...,Xn~N(0,1), X1^2+...+Xn^2~chi2(n)
   # NOTE: (n - 1) sample_var(x) / total_var ~ chi2(n - 1)
   sample_var = var(x) if x is not None else svar;
   n = x.shape[0] if x is not None else snum;
@@ -81,6 +83,7 @@ def var_ratio_interval(x1 = None, x2 = None, svar1 = None, svar2 = None, snum1 =
     assert len(x1.shape) == 1;
     assert len(x2.shape) == 1;
   assert type(conf) is float and 0 <= conf <= 1;
+  # INFO: X1~chi2(n1), X2~chi2(n2), sqrt(X1/n1)/sqrt(X2/n2)~F(n1,n2)
   # NOTE: (sample_var(x1)/sample_var(x2)/(total_var1/total_var2)) ~ F(n1 - 1, n2 - 1)
   sample_var1 = var(x1) if x1 is not None else svar1;
   sample_var2 = var(x2) if x2 is not None else svar2;
