@@ -54,7 +54,7 @@ def mean_interval(x = None, smean = None, sstdvar = None, snum = None, conf = 0.
   else:
     raise Exception('unknown interval type!');
 
-def var_interval(x = None, svar = None, snum = None, conf = 0.95):
+def var_interval(x = None, svar = None, snum = None, conf = 0.95, interval_type = IntervalType.both):
   assert x is not None or svar is not None;
   if x is not None: assert len(x.shape) == 1;
   assert type(conf) is float and 0 <= conf <= 1;
@@ -63,18 +63,39 @@ def var_interval(x = None, svar = None, snum = None, conf = 0.95):
   sample_var = var(x) if x is not None else svar;
   n = x.shape[0] if x is not None else snum;
   alpha = 1 - conf;
+  if interval_type == IntervalType.both:
+    chi2_dist = tfp.distributions.Chi2(n - 1);
+    c2 = chi2_dist.quantile(alpha / 2)
+    c1 = chi2_dist.quantile(1 - alpha / 2);
 
-  chi2_dist = tfp.distributions.Chi2(n - 1);
-  c1 = chi2_dist.quantile(alpha / 2)
-  c2 = chi2_dist.quantile(1 - alpha / 2);
+    low_bound = (n - 1) * sample_var / c1;
+    upper_bound = (n - 1) * sample_var / c2;
+    return low_bound, upper_bound;
+  elif interval_type == IntervalType.left:
+    chi2_dist = tfp.distributions.Chi2(n - 1);
+    c1 = chi2_dist.quantile(1 - alpha);
+    low_bound = (n - 1) * sample_var / c1;
+    return low_bound;
+  elif interval_type == IntervalType.right:
+    chi2_dist = tfp.distributions.Chi2(n - 1);
+    c2 = chi2_dist.quantile(alpha);
+    upper_bound = (n - 1) * sample_var / c2;
+    return upper_bound;
+  else:
+    raise Exception('unknown interval type!');
 
-  low_bound = (n - 1) * sample_var / c2;
-  upper_bound = (n - 1) * sample_var / c1;
-  return low_bound, upper_bound;
-
-def stdvar_interval(x = None, svar = None, snum = None, conf = 0.95):
-  low_bound, upper_bound = var_interval(x, svar, snum, conf);
-  return tf.math.sqrt(low_bound), tf.math.sqrt(upper_bound);
+def stdvar_interval(x = None, svar = None, snum = None, conf = 0.95, interval_type = IntervalType.both):
+  if interval_type == IntervalType.both:
+    low_bound, upper_bound = var_interval(x, svar, snum, conf, interval_type);
+    return tf.math.sqrt(low_bound), tf.math.sqrt(upper_bound);
+  elif interval_type == IntervalType.left:
+    low_bound = var_interval(x, svar, snum, conf, interval_type);
+    return tf.math.sqrt(low_bound);
+  elif interval_type == IntervalType.right:
+    upper_bound = var_interval(x, svar, snum, conf, interval_type);
+    return tf.math.sqrt(upper_bound);
+  else:
+    raise Exception('unknown interval type!');
 
 def mean_diff_interval(x1 = None, x2 = None, smean1 = None, smean2 = None, svar1 = None, svar2 = None, snum1 = None, snum2 = None, conf = 0.95):
   assert (x1 is not None and x2 is not None) or (smean1 is not None and smean2 is not None and svar1 is not None and svar2 is not None and snum1 is not None and snum2 is not None);
