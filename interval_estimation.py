@@ -97,7 +97,7 @@ def stdvar_interval(x = None, svar = None, snum = None, conf = 0.95, interval_ty
   else:
     raise Exception('unknown interval type!');
 
-def mean_diff_interval(x1 = None, x2 = None, smean1 = None, smean2 = None, svar1 = None, svar2 = None, snum1 = None, snum2 = None, conf = 0.95):
+def mean_diff_interval(x1 = None, x2 = None, smean1 = None, smean2 = None, svar1 = None, svar2 = None, snum1 = None, snum2 = None, conf = 0.95, interval_type = IntervalType.both):
   assert (x1 is not None and x2 is not None) or (smean1 is not None and smean2 is not None and svar1 is not None and svar2 is not None and snum1 is not None and snum2 is not None);
   if (x1 is not None and x2 is not None):
     assert len(x1.shape) == 1;
@@ -113,18 +113,41 @@ def mean_diff_interval(x1 = None, x2 = None, smean1 = None, smean2 = None, svar1
   sample_var = ((n1 - 1) * sample_var1 + (n2 - 1) * sample_var2) / (n1 + n2 - 2);
   sample_stdvar = tf.math.sqrt(sample_var);
   alpha = 1 - conf;
-  # NOTE: tensorflow probability doesn't implement student quantile yet
-  '''
-  student_dist = tfp.distributions.StudentT(df = n1 + n2 - 2, loc = 0, scale = 1);
-  t = student_dist.quantile(1 - alpha / 2);
-  '''
-  # NOTE: currently we have to use scipy's implement of quantile
-  from scipy import stats;
-  t = stats.t(df = n1 + n2 - 2).ppf(1 - alpha / 2);
+  if interval_type == IntervalType.both:
+    # NOTE: tensorflow probability doesn't implement student quantile yet
+    '''
+    student_dist = tfp.distributions.StudentT(df = n1 + n2 - 2, loc = 0, scale = 1);
+    t1 = student_dist.quantile(1 - alpha / 2);
+    t2 = student_dist.quantile(alpha / 2);
+    '''
+    # NOTE: currently we have to use scipy's implement of quantile
+    from scipy import stats;
+    t1 = stats.t(df = n1 + n2 - 2).ppf(1 - alpha / 2);
+    t2 = stats.t(df = n1 + n2 - 2).ppf(alpha / 2);
 
-  low_bound = sample_mean1 - sample_mean2 - sample_stdvar * t * tf.math.sqrt(1 / n1 + 1 / n2);
-  upper_bound = sample_mean1 - sample_mean2 + sample_stdvar * t * tf.math.sqrt(1 / n1 + 1 / n2);
-  return low_bound, upper_bound;
+    low_bound = sample_mean1 - sample_mean2 - sample_stdvar * t1 * tf.math.sqrt(1 / n1 + 1 / n2);
+    upper_bound = sample_mean1 - sample_mean2 + sample_stdvar * t2 * tf.math.sqrt(1 / n1 + 1 / n2);
+    return low_bound, upper_bound;
+  elif interval_type == IntervalType.left:
+    '''
+    student_dist = tfp.distributions.StudentT(df = n1 + n2 - 2, loc = 0, scale = 1);
+    t1 = student_dist.quantile(1 - alpha);
+    '''
+    from scipy import stats;
+    t1 = stats.t(df = n1 + n2 - 2).ppf(1 - alpha);
+    low_bound = sample_mean1 - sample_mean2 - sample_stdvar * t1 * tf.math.sqrt(1 / n1 + 1 / n2);
+    return low_bound;
+  elif interval_type == IntervalType.right:
+    '''
+    student_dist = tfp.distributions.StudentT(df = n1 + n2 - 2, loc = 0, scale = 1);
+    t2 = student_dist.quantile(alpha);
+    '''
+    from scipy import stats;
+    t1 = stats.t(df = n1 + n2 - 2).ppf(alpha);
+    upper_bound = sample_mean1 - sample_mean2 + sample_stdvar * t2 * tf.math.sqrt(1 / n1 + 1 / n2);
+    return upper_bound;
+  else:
+    raise Exception('unknown interval type!');
 
 def var_ratio_interval(x1 = None, x2 = None, svar1 = None, svar2 = None, snum1 = None, snum2 = None, conf = 0.95):
   assert (x1 is not None and x2 is not None) or (svar1 is not None and svar2 is not None and snum1 is not None and snum2 is not None);
