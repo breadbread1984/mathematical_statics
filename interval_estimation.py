@@ -149,7 +149,7 @@ def mean_diff_interval(x1 = None, x2 = None, smean1 = None, smean2 = None, svar1
   else:
     raise Exception('unknown interval type!');
 
-def var_ratio_interval(x1 = None, x2 = None, svar1 = None, svar2 = None, snum1 = None, snum2 = None, conf = 0.95):
+def var_ratio_interval(x1 = None, x2 = None, svar1 = None, svar2 = None, snum1 = None, snum2 = None, conf = 0.95, interval_type = IntervalType.both):
   assert (x1 is not None and x2 is not None) or (svar1 is not None and svar2 is not None and snum1 is not None and snum2 is not None);
   if (x1 is not None and x2 is not None):
     assert len(x1.shape) == 1;
@@ -162,15 +162,28 @@ def var_ratio_interval(x1 = None, x2 = None, svar1 = None, svar2 = None, snum1 =
   n1 = x1.shape[0] if x1 is not None else snum1;
   n2 = x2.shape[0] if x2 is not None else snum2;
   alpha = 1 - conf;
-  # NOTE: tensorflow probability doesn't implement f distribution
-  # currently we have to use scipy's implement of quantile of f distribution
-  from scipy import stats;
-  f1 = stats.f(n1 - 1, n2 - 1).ppf(1 - alpha / 2);
-  f2 = stats.f(n1 - 1, n2 - 1).ppf(alpha / 2);
+  if interval_type == IntervalType.both:
+    # NOTE: tensorflow probability doesn't implement f distribution
+    # currently we have to use scipy's implement of quantile of f distribution
+    from scipy import stats;
+    f1 = stats.f(n1 - 1, n2 - 1).ppf(1 - alpha / 2);
+    f2 = stats.f(n1 - 1, n2 - 1).ppf(alpha / 2);
 
-  low_bound = sample_var1 / sample_var2 / f1;
-  upper_bound = sample_var1 / sample_var2 / f2;
-  return low_bound, upper_bound;
+    low_bound = sample_var1 / sample_var2 / f1;
+    upper_bound = sample_var1 / sample_var2 / f2;
+    return low_bound, upper_bound;
+  elif interval_type == IntervalType.left:
+    from scipy import stats;
+    f1 = stats.f(n1 - 1, n2 - 1).ppf(1 - alpha);
+    low_bound = sample_var1 / sample_var2 / f1;
+    return low_bound;
+  elif interval_type == IntervalType.right:
+    from scipy import stats;
+    f2 = stats.f(n1 - 1, n2 - 1).ppf(alpha);
+    upper_bound = sample_var1 / sample_var2 / f2;
+    return upper_bound;
+  else:
+    raise Exception('unknown interval type!');
 
 def p_interval(x = None, smean = None, snum = None, conf = 0.95):
   # NOTE: x must from bernoulli distribution
