@@ -185,7 +185,7 @@ def var_ratio_interval(x1 = None, x2 = None, svar1 = None, svar2 = None, snum1 =
   else:
     raise Exception('unknown interval type!');
 
-def p_interval(x = None, smean = None, snum = None, conf = 0.95):
+def p_interval(x = None, smean = None, snum = None, conf = 0.95, interval_type = IntervalType.both):
   # NOTE: x must from bernoulli distribution
   assert x is not None or (smean is not None and snum is not None);
   if x is not None: assert len(x.shape) == 1;
@@ -194,17 +194,33 @@ def p_interval(x = None, smean = None, snum = None, conf = 0.95):
   sample_mean = mean(x) if x is not None else smean;
   n = x.shape[0] if x is not None else snum;
   alpha = 1 - conf;
-  
-  normal_dist = tfp.distributions.Normal(loc = 0, scale = 1);
-  z = normal_dist.quantile(1 - alpha / 2);
-
-  a = n + z**2;
-  b = -(2 * n * sample_mean + z**2);
-  c = n * sample_mean**2;
-  
-  low_bound = 1/(2*a) * (-b - tf.math.sqrt(b**2 - 4 * a * c));
-  upper_bound = 1/(2*a) * (-b + tf.math.sqrt(b**2 - 4 * a * c));
-  return low_bound, upper_bound;
+  if interval_type == IntervalType.both:
+    normal_dist = tfp.distributions.Normal(loc = 0, scale = 1);
+    z = normal_dist.quantile(1 - alpha / 2);
+    a = n + z**2;
+    b = -(2 * n * sample_mean + z**2);
+    c = n * sample_mean**2;
+    low_bound = 1/(2*a) * (-b - tf.math.sqrt(b**2 - 4 * a * c));
+    upper_bound = 1/(2*a) * (-b + tf.math.sqrt(b**2 - 4 * a * c));
+    return low_bound, upper_bound;
+  elif interval_type == IntervalType.left:
+    normal_dist = tfp.distributions.Normal(loc = 0, scale = 1);
+    z = normal_dist.quantile(1 - alpha);
+    a = n + z**2;
+    b = -(2 * n * sample_mean + z**2);
+    c = n * sample_mean**2;
+    low_bound = 1/(2*a) * (-b - tf.math.sqrt(b**2 - 4 * a * c));
+    return low_bound;
+  elif interval_type == IntervalType.right:
+    normal_dist = tfp.distributions.Normal(loc = 0, scale = 1);
+    z = normal_dist.quantile(alpha);
+    a = n + z**2;
+    b = -(2 * n * sample_mean + z**2);
+    c = n * sample_mean**2;
+    upper_bound = 1/(2*a) * (-b + tf.math.sqrt(b**2 - 4 * a * c));
+    return upper_bound;
+  else:
+    raise Exception('unknown interval type!');
 
 if __name__ == "__main__":
   # interval estimation for both boundaries
