@@ -111,9 +111,15 @@ def p_interval(x = None, smean = None, snum = None, conf = 0.95):
   alpha = 1 - conf;
   
   normal_dist = tfp.distributions.Normal(loc = 0, scale = 1);
-  n = normal_dist.quantile(1 - alpha / 2);
+  z = normal_dist.quantile(1 - alpha / 2);
+
+  a = n + z**2;
+  b = -(2 * n * sample_mean + z**2);
+  c = n * sample_mean**2;
   
-  low_bound = 
+  low_bound = 1/(2*a) * (-b - tf.math.sqrt(b**2 - 4 * a * c));
+  upper_bound = 1/(2*a) * (-b + tf.math.sqrt(b**2 - 4 * a * c));
+  return low_bound, upper_bound;
 
 if __name__ == "__main__":
   samples = tf.constant([506, 508, 499, 503, 504, 510, 497, 512, 514, 505, 493, 496, 506, 502, 509, 496]);
@@ -122,3 +128,4 @@ if __name__ == "__main__":
   print(stdvar_interval(samples, conf = 0.95));
   print(mean_diff_interval(smean1 = 500., smean2 = 496., svar1 = 1.10**2, svar2 = 1.20**2, snum1 = 10, snum2 = 20, conf = 0.95));
   print(var_ratio_interval(svar1 = 0.34, svar2 = 0.29, snum1 = 18, snum2 = 13, conf = 0.90));
+  print(p_interval(smean = 0.6, snum = 100, conf = 0.95));
